@@ -1,37 +1,34 @@
 import asyncio
 from aiohttp import web
 from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
-import cv2
 from picamera2 import Picamera2
 import av
 
-pcs = set()
+pcs = set()  # Tous les RTCPeerConnection actifs
 
-# ⚡ Track global de la caméra
 class CameraTrack(VideoStreamTrack):
+    """
+    Track global de la caméra CSI du Pi
+    """
     def __init__(self):
         super().__init__()
         self.picam2 = Picamera2()
         self.picam2.configure(
-            self.picam2.create_video_configuration(main={
-                "size": (640, 480),
-                "format": "RGB888"
-            })
+            self.picam2.create_video_configuration(main={"size": (640, 480), "format": "RGB888"})
         )
         self.picam2.start()
 
     async def recv(self):
         pts, time_base = await self.next_timestamp()
         frame = self.picam2.capture_array()
-        # Picamera2 renvoie déjà RGB
         video_frame = av.VideoFrame.from_ndarray(frame, format="rgb24")
         video_frame.pts = pts
         video_frame.time_base = time_base
         return video_frame
 
-camera_track = CameraTrack()
+camera_track = CameraTrack()  # Une seule caméra pour tous les clients
 
-# ⚡ Endpoint WebRTC
+# Endpoint WebRTC
 async def offer(request):
     params = await request.json()
     offer = RTCSessionDescription(sdp=params["sdp"], type=params["type"])
@@ -52,7 +49,7 @@ async def offer(request):
         "type": pc.localDescription.type
     })
 
-# ⚡ Page web
+# Page HTML
 async def index(request):
     return web.FileResponse("index.html")
 
@@ -60,4 +57,5 @@ app = web.Application()
 app.router.add_get("/", index)
 app.router.add_post("/offer", offer)
 
-web.run_app(app, port=8080)
+if __name__ == "__main__":
+    web.run_app(app, port=8080)
