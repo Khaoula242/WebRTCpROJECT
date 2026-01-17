@@ -10,14 +10,17 @@
     <script>
         const pc = new RTCPeerConnection();
 
-        pc.ontrack = function(event) {
+        // Quand on reçoit un track du serveur
+        pc.ontrack = (event) => {
             document.getElementById("video").srcObject = event.streams[0];
         };
 
         async function start() {
+            // Créer l'offre côté client
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
 
+            // Envoyer l'offre au serveur
             const response = await fetch("/offer", {
                 method: "POST",
                 body: JSON.stringify(pc.localDescription),
