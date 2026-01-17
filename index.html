@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Raspberry Pi Camera</title>
+    <title>Raspberry Pi Camera WebRTC</title>
 </head>
 <body>
-    <h2>Live Camera Stream</h2>
+    <h2>Live Camera Stream (WebRTC)</h2>
     <video id="video" autoplay playsinline></video>
 
     <script>
         const pc = new RTCPeerConnection();
 
-        // Quand on reçoit un track du serveur
         pc.ontrack = (event) => {
             document.getElementById("video").srcObject = event.streams[0];
         };
