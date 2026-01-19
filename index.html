@@ -1,16 +1,15 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<title>WebRTC CSI Camera</title>
-</head>
 <body>
 
-<h2>WebRTC – Raspberry Pi CSI Camera</h2>
+<h2>WebRTC CSI Camera</h2>
 <video id="video" autoplay playsinline width="640"></video>
 
 <script>
 const pc = new RTCPeerConnection();
+
+/* ✅ LIGNE CRITIQUE */
+pc.addTransceiver("video", { direction: "recvonly" });
 
 pc.ontrack = (event) => {
     document.getElementById("video").srcObject = event.streams[0];
@@ -22,7 +21,7 @@ async function start() {
 
     const response = await fetch("/offer", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             sdp: offer.sdp,
             type: offer.type
