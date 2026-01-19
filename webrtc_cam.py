@@ -1,12 +1,18 @@
 import asyncio
 from aiohttp import web
-from aiortc import RTCPeerConnection, RTCSessionDescription, VideoStreamTrack
+from aiortc import (
+    RTCPeerConnection,
+    RTCSessionDescription,
+    RTCConfiguration,
+    RTCIceServer,
+    VideoStreamTrack
+)
 from picamera2 import Picamera2, MappedArray
 import av
 
 pcs = set()
 
-# 🔴 CAMERA UNIQUE
+# ================= CAMERA (UNE SEULE FOIS) =================
 picam2 = Picamera2()
 picam2.configure(
     picam2.create_preview_configuration(
@@ -14,6 +20,7 @@ picam2.configure(
     )
 )
 picam2.start()
+
 
 class CameraTrack(VideoStreamTrack):
     async def recv(self):
@@ -29,21 +36,28 @@ class CameraTrack(VideoStreamTrack):
         video_frame.time_base = time_base
         return video_frame
 
+
 camera_track = CameraTrack()
 
+
+# ================= WEBRTC OFFER =================
 async def offer(request):
     params = await request.json()
 
-    pc = RTCPeerConnection(
-        configuration={
-            "iceServers": [{"urls": "stun:stun.l.google.com:19302"}]
-        }
+    config = RTCConfiguration(
+        iceServers=[
+            RTCIceServer(urls="stun:stun.l.google.com:19302")
+        ]
     )
 
+    pc = RTCPeerConnection(config)
     pcs.add(pc)
 
     await pc.setRemoteDescription(
-        RTCSessionDescription(sdp=params["sdp"], type=params["type"])
+        RTCSessionDescription(
+            sdp=params["sdp"],
+            type=params["type"]
+        )
     )
 
     pc.addTrack(camera_track)
@@ -56,9 +70,13 @@ async def offer(request):
         "type": pc.localDescription.type
     })
 
+
+# ================= HTML =================
 async def index(request):
     return web.FileResponse("index.html")
 
+
+# ================= SERVER =================
 app = web.Application()
 app.router.add_get("/", index)
 app.router.add_post("/offer", offer)
