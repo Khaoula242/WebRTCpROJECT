@@ -1,8 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WebRTC CSI Camera</title>
+</head>
 <body>
-<h2>WebRTC CSI Camera</h2>
-<video id="video" autoplay playsinline></video>
+
+<h2>WebRTC – Raspberry Pi CSI Camera</h2>
+
+<video id="video" autoplay playsinline style="width:640px; border:2px solid black;"></video>
 
 <script>
 const pc = new RTCPeerConnection();
@@ -30,5 +36,6 @@ async function start() {
 
 start();
 </script>
+
 </body>
 </html>
