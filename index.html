@@ -1,36 +1,34 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Raspberry Pi Camera WebRTC</title>
-</head>
 <body>
-    <h2>Live Camera Stream (WebRTC)</h2>
-    <video id="video" autoplay playsinline></video>
+<h2>WebRTC CSI Camera</h2>
+<video id="video" autoplay playsinline></video>
 
-    <script>
-        const pc = new RTCPeerConnection();
+<script>
+const pc = new RTCPeerConnection();
 
-        pc.ontrack = (event) => {
-            document.getElementById("video").srcObject = event.streams[0];
-        };
+pc.ontrack = (event) => {
+    document.getElementById("video").srcObject = event.streams[0];
+};
 
-        async function start() {
-            // Créer l'offre côté client
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
+async function start() {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
 
-            // Envoyer l'offre au serveur
-            const response = await fetch("/offer", {
-                method: "POST",
-                body: JSON.stringify(pc.localDescription),
-                headers: { "Content-Type": "application/json" }
-            });
+    const response = await fetch("/offer", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            sdp: offer.sdp,
+            type: offer.type
+        })
+    });
 
-            const answer = await response.json();
-            await pc.setRemoteDescription(answer);
-        }
+    const answer = await response.json();
+    await pc.setRemoteDescription(answer);
+}
 
-        start();
-    </script>
+start();
+</script>
 </body>
 </html>
