@@ -44,14 +44,15 @@ camera_track = CameraTrack()
 async def offer(request):
     params = await request.json()
 
-    config = RTCConfiguration(
-        iceServers=[RTCIceServer(urls="stun:stun.l.google.com:19302")]
+    pc = RTCPeerConnection(
+        RTCConfiguration(
+            iceServers=[RTCIceServer(urls="stun:stun.l.google.com:19302")]
+        )
     )
 
-    pc = RTCPeerConnection(config)
     pcs.add(pc)
 
-    # ✅ TRÈS IMPORTANT : ajouter le track AVANT setRemoteDescription
+    # ✅ OK maintenant car le navigateur a un transceiver
     pc.addTrack(camera_track)
 
     await pc.setRemoteDescription(
@@ -68,7 +69,6 @@ async def offer(request):
         "sdp": pc.localDescription.sdp,
         "type": pc.localDescription.type
     })
-
 
 # ================= HTML =================
 async def index(request):
