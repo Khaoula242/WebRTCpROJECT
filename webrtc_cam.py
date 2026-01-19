@@ -12,7 +12,7 @@ import av
 
 pcs = set()
 
-# ================= CAMERA (UNE SEULE FOIS) =================
+# ================= CAMERA UNIQUE =================
 picam2 = Picamera2()
 picam2.configure(
     picam2.create_preview_configuration(
@@ -31,10 +31,10 @@ class CameraTrack(VideoStreamTrack):
             frame = m.array.copy()
         request.release()
 
-        video_frame = av.VideoFrame.from_ndarray(frame, format="rgb24")
-        video_frame.pts = pts
-        video_frame.time_base = time_base
-        return video_frame
+        frame = av.VideoFrame.from_ndarray(frame, format="rgb24")
+        frame.pts = pts
+        frame.time_base = time_base
+        return frame
 
 
 camera_track = CameraTrack()
@@ -45,13 +45,14 @@ async def offer(request):
     params = await request.json()
 
     config = RTCConfiguration(
-        iceServers=[
-            RTCIceServer(urls="stun:stun.l.google.com:19302")
-        ]
+        iceServers=[RTCIceServer(urls="stun:stun.l.google.com:19302")]
     )
 
     pc = RTCPeerConnection(config)
     pcs.add(pc)
+
+    # ✅ TRÈS IMPORTANT : ajouter le track AVANT setRemoteDescription
+    pc.addTrack(camera_track)
 
     await pc.setRemoteDescription(
         RTCSessionDescription(
@@ -59,8 +60,6 @@ async def offer(request):
             type=params["type"]
         )
     )
-
-    pc.addTrack(camera_track)
 
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)
@@ -82,3 +81,4 @@ app.router.add_get("/", index)
 app.router.add_post("/offer", offer)
 
 web.run_app(app, port=8080)
+
